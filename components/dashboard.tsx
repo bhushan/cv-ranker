@@ -66,12 +66,12 @@ export function Dashboard({ initialData }: { initialData: DashboardData }) {
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   // Restore browser-only demo edits after server hydration.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (initialData.mode === "demo") {
       const cached = sessionStorage.getItem("kargo-demo-v1");
       if (cached)
         try {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- Rehydrate browser-only demo storage after server rendering.
           setData(JSON.parse(cached));
         } catch {}
     }
