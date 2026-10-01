@@ -16,8 +16,79 @@ export const evaluationSchema = z
     ),
   })
   .strict();
+/** Compare text ignoring typography only: quotes, dashes, bullets and spacing around punctuation. */
 const normalize = (text: string) =>
-  text.replace(/\s+/g, " ").trim().toLowerCase();
+  text
+    .normalize("NFKC")
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/[\u2010-\u2015\u2212]/g, "-")
+    .replace(/[\u2022\u2023\u2043\u25AA\u25CF\u00B7]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/ ([.,;:!?)])/g, "$1")
+    .replace(/\( /g, "(")
+    .trim()
+    .toLowerCase();
+const UNAVAILABLE = "evidence unavailable";
+/**
+ * True when the quote is in the CV verbatim (ignoring typography and a trailing full stop).
+ * An excerpt joined by "..." or "…" passes only if every fragment appears, in order.
+ */
+export function evidenceFound(evidence: string, cvContent: string) {
+  const content = normalize(cvContent);
+  const fragments = evidence
+    .split(/\.{3}|\u2026/)
+    .map((f) =>
+      normalize(f)
+        .replace(/[.;,:]+$/, "")
+        .trim(),
+    )
+    .filter(Boolean);
+  if (!fragments.length) return false;
+  let from = 0;
+  for (const fragment of fragments) {
+    const at = content.indexOf(fragment, from);
+    if (at < 0) return false;
+    from = at + fragment.length;
+  }
+  return true;
+}
+const unverified = (criterion_id: string, reasoning: string) => ({
+  criterion_id,
+  score: 0,
+  confidence: 0,
+  evidence: "Evidence unavailable",
+  reasoning,
+});
+/**
+ * One result per rubric criterion, in rubric order. A quote that is not in the CV, or a criterion the
+ * AI skipped, becomes an honest zero, so nothing unverified is stored or shown.
+ */
+export function withVerifiedEvidence(
+  rubric: Rubric,
+  criteria: CriterionResult[],
+  cvContent: string,
+): CriterionResult[] {
+  return rubric.criteria.map(({ id }) => {
+    const c = criteria.find((x) => x.criterion_id === id);
+    if (!c)
+      return unverified(
+        id,
+        "The AI did not assess this criterion, so it was not scored. Check it in the interview.",
+      );
+    const evidence = normalize(c.evidence);
+    if (
+      !evidence ||
+      evidence === UNAVAILABLE ||
+      evidenceFound(c.evidence, cvContent)
+    )
+      return c;
+    return unverified(
+      id,
+      "The AI cited evidence that could not be found in the CV, so this criterion was not scored. Check the CV directly in the interview.",
+    );
+  });
+}
 export function calculateScore(
   rubric: Rubric,
   criteria: CriterionResult[],
@@ -46,20 +117,16 @@ export function calculateScore(
     new Set(criteria.map((c) => c.criterion_id)).size !== criteria.length
   )
     invalid();
-  const content = normalize(cvContent);
   return rubric.criteria.reduce((total, criterion) => {
     const result = criteria.find((c) => c.criterion_id === criterion.id);
     if (!result) return invalid();
     const evidence = normalize(result.evidence);
-    if (
-      (!evidence || evidence === "evidence unavailable") &&
-      result.score !== 0
-    )
+    if ((!evidence || evidence === UNAVAILABLE) && result.score !== 0)
       invalid();
     if (
       evidence &&
-      evidence !== "evidence unavailable" &&
-      !content.includes(evidence)
+      evidence !== UNAVAILABLE &&
+      !evidenceFound(result.evidence, cvContent)
     )
       invalid();
     return total + (result.score / 10) * criterion.weight;

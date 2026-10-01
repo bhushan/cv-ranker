@@ -145,7 +145,8 @@ export default async function CandidatePage({
                         <blockquote>{r.evidence}</blockquote>
                       ) : (
                         <p className="missing">
-                          The CV has no evidence for this, so it scores zero.
+                          No verified evidence for this in the CV, so it scores
+                          zero.
                         </p>
                       )}
                       <p>{r.reasoning}</p>
