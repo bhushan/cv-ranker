@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
 import { Logo } from "@/components/logo";
 import { requireFounder } from "@/lib/auth";
+export const metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
 async function signedIn() {
   try {

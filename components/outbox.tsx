@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import type { Candidate, EmailDraft } from "@/lib/domain";
-import { emailStatusLabel, emailTone, nextPendingDraft } from "@/lib/view";
+import {
+  emailStatusLabel,
+  emailTone,
+  isSyntheticAddress,
+  nextPendingDraft,
+} from "@/lib/view";
 import { request } from "@/lib/client-api";
 import { Badge } from "./badge";
 import { Button } from "./ui/button";
@@ -101,6 +106,7 @@ function DraftEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const editable = draft.status === "PENDING_REVIEW";
+  const sample = isSyntheticAddress(candidate.identity.email);
   const dirty = subject !== draft.subject || body !== draft.body;
   async function save(): Promise<EmailDraft> {
     return request<EmailDraft>(`/api/emails/${draft.id}`, "PATCH", {
@@ -232,26 +238,39 @@ function DraftEditor({
           </div>
         </div>
       ) : (
-        <div className="form-actions spread">
-          <Button variant="ghost" disabled={busy} onClick={() => act("reject")}>
-            Reject draft
-          </Button>
-          <div className="form-actions">
+        <>
+          {sample && (
+            <p className="hint">
+              This is a sample candidate. Example.com addresses can’t receive
+              email, so this draft can’t be sent. You can still edit or reject
+              it.
+            </p>
+          )}
+          <div className="form-actions spread">
             <Button
-              variant="outline"
-              disabled={busy || !dirty}
-              onClick={() => act("save")}
+              variant="ghost"
+              disabled={busy}
+              onClick={() => act("reject")}
             >
-              Save changes
+              Reject draft
             </Button>
-            <Button
-              disabled={busy || !subject.trim() || !body.trim()}
-              onClick={() => setConfirming(true)}
-            >
-              Approve and send
-            </Button>
+            <div className="form-actions">
+              <Button
+                variant="outline"
+                disabled={busy || !dirty}
+                onClick={() => act("save")}
+              >
+                Save changes
+              </Button>
+              <Button
+                disabled={busy || sample || !subject.trim() || !body.trim()}
+                onClick={() => setConfirming(true)}
+              >
+                Approve and send
+              </Button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </article>
   );

@@ -96,3 +96,13 @@ export function emailTone(status?: string) {
         ? "info"
         : "neutral";
 }
+/** Sample candidates use reserved example domains that can never receive email. */
+export const isSyntheticAddress = (email: string) =>
+  /@(?:example\.(?:com|org|net)|[^@]+\.invalid)$/i.test(email);
+export function candidateStage(c: Candidate, shortlisted: boolean) {
+  if (c.status === "FAILED") return { label: "Stopped", tone: "hold" };
+  if (c.status !== "COMPLETE") return { label: "Processing", tone: "info" };
+  return shortlisted
+    ? { label: "Shortlisted", tone: "signal" }
+    : { label: "Not shortlisted", tone: "neutral" };
+}

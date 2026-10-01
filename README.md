@@ -134,7 +134,7 @@ Use Resend Free. Verify a domain with its required SPF/DKIM records, choose a pe
 
 The founder edits a draft, reviews recipient/subject/body, and confirms that exact revision. The server saves the edit, then claims the matching revision atomically. A stale approval is rejected. `SENDING` is immutable in the UI. Resend receives stable idempotency key `kargo-draft-<draft UUID>`. Success records `SENT`, `sent_at`, and provider ID. Requests cannot resend sent, rejected or in-flight drafts.
 
-Network failures or provider acceptance followed by a database write failure remain locked as `SENDING`; no automated retry can create a duplicate after Resend's idempotency window expires. The founder must reconcile the provider record manually before an administrator changes the record. The app does not claim exactly-once delivery across two independent services.
+The recipient is checked before the send is claimed, so a missing or sample (`example.com`) address never locks a draft; the Outbox disables sending for sample candidates. A definite Resend rejection (any 4xx other than 429) sent nothing, so the draft returns to review with the provider's reason. Network failures, provider 5xx responses, or provider acceptance followed by a database write failure remain locked as `SENDING`; no automated retry can create a duplicate after Resend's idempotency window expires. The founder must reconcile the provider record manually before an administrator changes the record. The app does not claim exactly-once delivery across two independent services.
 
 ## Free-tier limits
 

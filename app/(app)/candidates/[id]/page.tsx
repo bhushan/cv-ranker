@@ -17,6 +17,17 @@ import {
 import { Badge } from "@/components/badge";
 import { Strip } from "@/components/strip";
 import { ResumeProcessing } from "@/components/resume-processing";
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const { candidates } = await getWorkspace();
+  return {
+    title: candidates.find((c) => c.id === id)?.identity.name ?? "Candidate",
+  };
+}
 export default async function CandidatePage({
   params,
   searchParams,

@@ -7,7 +7,7 @@ const archivo = Archivo({
   variable: "--font-archivo",
 });
 export const metadata: Metadata = {
-  title: "Kargo | Hiring workspace",
+  title: { default: "Kargo Hiring", template: "%s | Kargo Hiring" },
   description: "Evidence-led hiring, grounded in Kargo’s historical hires.",
 };
 export default function Layout({ children }: { children: React.ReactNode }) {

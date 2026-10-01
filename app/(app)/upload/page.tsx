@@ -1,4 +1,5 @@
 import { UploadFlow } from "@/components/upload-flow";
+export const metadata = { title: "Upload CV" };
 export default function UploadPage() {
   return (
     <>

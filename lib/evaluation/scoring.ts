@@ -30,28 +30,33 @@ const normalize = (text: string) =>
     .trim()
     .toLowerCase();
 const UNAVAILABLE = "evidence unavailable";
+const tidy = (fragment: string) =>
+  normalize(fragment)
+    .replace(/^["'(\[\s]+|["')\]\s]+$/g, "")
+    .replace(/[.;,:]+$/, "")
+    .trim();
 /**
- * True when the quote is in the CV verbatim (ignoring typography and a trailing full stop).
- * An excerpt joined by "..." or "…" passes only if every fragment appears, in order.
+ * True when the quote is in the CV verbatim, ignoring typography, wrapping quotes and a trailing
+ * full stop. A citation of several CV lines (quoted separately, or joined by "…", ";", "|",
+ * bullets or line breaks) passes only if every line is in the CV.
  */
 export function evidenceFound(evidence: string, cvContent: string) {
   const content = normalize(cvContent);
-  const fragments = evidence
-    .split(/\.{3}|\u2026/)
-    .map((f) =>
-      normalize(f)
-        .replace(/[.;,:]+$/, "")
-        .trim(),
-    )
-    .filter(Boolean);
-  if (!fragments.length) return false;
-  let from = 0;
-  for (const fragment of fragments) {
-    const at = content.indexOf(fragment, from);
-    if (at < 0) return false;
-    from = at + fragment.length;
-  }
-  return true;
+  const whole = tidy(evidence);
+  if (!whole) return false;
+  if (content.includes(whole)) return true;
+  const straight = normalize(evidence);
+  const quoted = [...straight.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  const fragments = (
+    quoted.length ? quoted : evidence.split(/\.{3}|\u2026|\n|;|\||\u2022/)
+  )
+    .map(tidy)
+    .filter((f) => f.length >= 4);
+  return (
+    fragments.length > 0 &&
+    fragments.some((f) => f.length >= 15) &&
+    fragments.every((f) => content.includes(f))
+  );
 }
 const unverified = (criterion_id: string, reasoning: string) => ({
   criterion_id,
