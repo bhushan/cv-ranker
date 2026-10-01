@@ -1,0 +1,79 @@
+{
+  "role": "PM",
+  "version": 1,
+  "source": "Eight historical Kargo hire CVs, supplied hires/ folder; performance ratings from case problem statement. Not derived from job descriptions.",
+  "criteria": [
+    {
+      "id": "field_workflows",
+      "name": "Field-level workflow understanding",
+      "weight": 25,
+      "description": "Worked directly with freight, customs, carrier or similarly operations-heavy users; describes specific handoffs, exceptions and documentation constraints, rather than generic industry familiarity.",
+      "evaluation_guidance": "0: evidence unavailable. 1-3: generic claim or supporting participation only. 4-6: concrete personal action but unclear autonomy or outcome. 7-8: clear action, scope and relevant result. 9-10: repeated, independent, adopted improvements with specific outcomes. PM: clear personal contribution within one workflow; collaboration is acceptable. Quote exact sanitized CV text; do not infer missing facts.",
+      "rationale": "Rohan built tools after managing shipment documentation; Sunita handled customs documentation; Aditya worked terminal operations; Meghna resolved customs holds; Lavanya managed carriers. Vikram and Rahul show SaaS expertise without the same field exposure.",
+      "source_hires": [
+        "Rohan Desai",
+        "Sunita Krishnamurthy",
+        "Aditya Shetty",
+        "Meghna Tiwari",
+        "Lavanya Iyer"
+      ]
+    },
+    {
+      "id": "self_started",
+      "name": "Self-started improvements that stuck",
+      "weight": 25,
+      "description": "Identified an unassigned operational gap, built a practical solution and shows that real users or teams adopted it.",
+      "evaluation_guidance": "0: evidence unavailable. 1-3: generic claim or supporting participation only. 4-6: concrete personal action but unclear autonomy or outcome. 7-8: clear action, scope and relevant result. 9-10: repeated, independent, adopted improvements with specific outcomes. PM: clear personal contribution within one workflow; collaboration is acceptable. Quote exact sanitized CV text; do not infer missing facts.",
+      "rationale": "Rohan initiated shipment tracking and verification; Sunita redesigned intake without notice; Meghna created standard onboarding; Lavanya initiated visibility and carrier reviews. These are concrete self-started changes, not just assigned delivery.",
+      "source_hires": [
+        "Rohan Desai",
+        "Sunita Krishnamurthy",
+        "Meghna Tiwari",
+        "Lavanya Iyer"
+      ]
+    },
+    {
+      "id": "independent_closure",
+      "name": "Independent ownership through closure",
+      "weight": 20,
+      "description": "Owns a complete workflow across stakeholders, makes calls without a senior decision layer and follows implementation through adoption or resolution.",
+      "evaluation_guidance": "0: evidence unavailable. 1-3: generic claim or supporting participation only. 4-6: concrete personal action but unclear autonomy or outcome. 7-8: clear action, scope and relevant result. 9-10: repeated, independent, adopted improvements with specific outcomes. PM: clear personal contribution within one workflow; collaboration is acceptable. Quote exact sanitized CV text; do not infer missing facts.",
+      "rationale": "Sunita scoped migration, coordinated vendor, trained staff and monitored go-live; Aditya owned the entire sales cycle; Meghna owned six-week resolution and customer communication; Lavanya was sole PM and closed outage actions. Rahul also has this strength, so it alone does not predict success.",
+      "source_hires": [
+        "Sunita Krishnamurthy",
+        "Aditya Shetty",
+        "Meghna Tiwari",
+        "Lavanya Iyer",
+        "Rahul Bose"
+      ]
+    },
+    {
+      "id": "learning_calls",
+      "name": "Learning from uncomfortable decisions",
+      "weight": 15,
+      "description": "Gives a concrete example of changing course, diagnosing failure or owning a post-mortem, with the resulting corrective action.",
+      "evaluation_guidance": "0: evidence unavailable. 1-3: generic claim or supporting participation only. 4-6: concrete personal action but unclear autonomy or outcome. 7-8: clear action, scope and relevant result. 9-10: repeated, independent, adopted improvements with specific outcomes. PM: clear personal contribution within one workflow; collaboration is acceptable. Quote exact sanitized CV text; do not infer missing facts.",
+      "rationale": "Aditya documented the lost-account procurement error; Lavanya killed two low-adoption features and owned outage retrospectives. This signal is present in fewer successful profiles, so it receives a lower weight and is treated as a hypothesis.",
+      "source_hires": [
+        "Aditya Shetty",
+        "Lavanya Iyer"
+      ]
+    },
+    {
+      "id": "operational_results",
+      "name": "Operational results beyond output",
+      "weight": 15,
+      "description": "Connects work to documented adoption, avoided disruption, reduced support or improved workflow reliability, with scope and a specific result.",
+      "evaluation_guidance": "0: evidence unavailable. 1-3: generic claim or supporting participation only. 4-6: concrete personal action but unclear autonomy or outcome. 7-8: clear action, scope and relevant result. 9-10: repeated, independent, adopted improvements with specific outcomes. PM: clear personal contribution within one workflow; collaboration is acceptable. Quote exact sanitized CV text; do not infer missing facts.",
+      "rationale": "Rohan reduced lag and incidents; Sunita preserved continuity and passed inspections; Meghna reduced churn and avoided shipment delay; Lavanya reduced support and delivery exceptions. Vikram and Preetham also show metrics, so metrics alone are insufficient.",
+      "source_hires": [
+        "Rohan Desai",
+        "Sunita Krishnamurthy",
+        "Meghna Tiwari",
+        "Lavanya Iyer",
+        "Vikram Nair",
+        "Preetham Rao"
+      ]
+    }
+  ]
+}
