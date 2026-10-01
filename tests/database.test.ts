@@ -7,7 +7,7 @@ let draft: string;
 let revision: string;
 beforeAll(async () => {
   db = new PGlite();
-  await db.exec(`create role anon; create role authenticated; create role service_role; create schema storage; create table public.candidates(marker text); insert into public.candidates values('existing meera data');
+  await db.exec(`create role anon; create role authenticated; create role service_role; create schema storage; create table public.candidates(marker text); insert into public.candidates values('existing app data');
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`);
   const schema = readFileSync(
     "supabase/migrations/001_schema.sql",
@@ -37,7 +37,7 @@ describe("real PostgreSQL migrations and atomic persistence", () => {
     const legacy = await db.query<{ marker: string }>(
       "select marker from public.candidates",
     );
-    expect(legacy.rows).toEqual([{ marker: "existing meera data" }]);
+    expect(legacy.rows).toEqual([{ marker: "existing app data" }]);
     const bucket = await db.query<{ id: string; public: boolean }>(
       "select id,public from storage.buckets",
     );
@@ -197,7 +197,7 @@ describe("atomic synthetic seed", () => {
     const seedDb = new PGlite();
     try {
       await seedDb.exec(
-        `create role anon; create role authenticated; create role service_role; create schema storage; create table public.candidates(marker text); insert into public.candidates values('existing meera data'); create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`,
+        `create role anon; create role authenticated; create role service_role; create schema storage; create table public.candidates(marker text); insert into public.candidates values('existing app data'); create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`,
       );
       await seedDb.exec(
         readFileSync("supabase/migrations/001_schema.sql", "utf8").replace(

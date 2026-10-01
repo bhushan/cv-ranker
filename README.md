@@ -1,4 +1,6 @@
-# Kargo Hiring Dashboard
+# Kargo Hiring
+
+Live app: <https://kargo-hiring-dashboard-alpha.vercel.app> (founder sign-in only).
 
 A founder-controlled hiring intelligence MVP for MESA Case Study 2, “Arjun and the Hiring Backlog”. Upload a PDF or DOCX once, evaluate the professional content against both historically calibrated PM and SPM rubrics, review evidence and interview briefs, then explicitly approve individual emails.
 
@@ -10,7 +12,7 @@ Next.js App Router, TypeScript, Tailwind CSS, local shadcn/ui components with Ra
 
 ```mermaid
 flowchart TD
-  Founder[Founder in authenticated dashboard] --> Upload[POST candidates: validate PDF/DOCX, max 4 MB]
+  Founder[Signed-in founder] --> Upload[POST candidates: validate PDF/DOCX, max 4 MB]
   Upload --> Storage[Supabase private CV bucket]
   Upload --> Jobs[Persisted processing stage]
   Jobs --> Parse[Explicit server request: parse and separate identity]
@@ -56,7 +58,7 @@ Rule-based redaction is conservative but does not prove anonymization of arbitra
 
 Server-only REST requests to `gemini-2.5-flash` use JSON Schema output and Zod validation. CV text is untrusted data; the system prompt instructs Gemini to ignore embedded instructions, avoid unsupported inferences and use professional evidence only. No provider/model fallback is configured.
 
-The response must contain exactly the rubric's criterion IDs, bounded scores from 0–10, confidence from 0–1, an exact contiguous evidence excerpt, and concise reasoning. Evidence is checked against the sanitized source after whitespace/case normalization. Missing evidence must have score 0 and is visibly distinguished from a weak evidenced score. Unsupported quotes or malformed outputs produce `GEMINI_INVALID_RESPONSE`.
+The response must contain exactly the rubric's criterion IDs, bounded scores from 0–10, confidence from 0–1, an exact contiguous evidence excerpt, and concise reasoning. Evidence is checked against the sanitized source ignoring only typography (case, whitespace, quote and dash styles, bullet glyphs, spacing before punctuation, a trailing full stop); an excerpt joined by an ellipsis passes only if every fragment appears in order. A criterion whose quote still cannot be found, or that the model skipped, is stored as score 0 with "Evidence unavailable" and an explanation, so unverified text is never saved or shown. Missing evidence is visibly distinguished from a weak evidenced score. Malformed outputs produce `GEMINI_INVALID_RESPONSE`.
 
 ```text
 criterion contribution = (criterion score / 10) × criterion weight
@@ -101,16 +103,16 @@ The production compiler uses `next build`. On a machine that restricts Turbopack
 
 Set these directly in the Vercel project. Never commit values or paste keys into chat.
 
-| Variable                        | Purpose                                                   |
-| ------------------------------- | --------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                      |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anonymous key for founder authentication  |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only database and private storage access           |
-| `FOUNDER_USER_ID`               | UUID of the single permitted Supabase Auth user           |
-| `GEMINI_API_KEY`                | Server-only Gemini Developer API key                      |
-| `GEMINI_FREE_TIER_CONFIRMED`    | Must be `true`; operator confirms billing is disabled     |
-| `RESEND_API_KEY`                | Server-only Resend key                                    |
-| `RESEND_FROM_EMAIL`             | Verified sender, for example `Kargo <hiring@your-domain>` |
+| Variable                        | Purpose                                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                                                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anonymous key for founder authentication                                |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only database and private storage access                                         |
+| `FOUNDER_USER_ID`               | UUID of the single permitted Supabase Auth user                                         |
+| `GEMINI_API_KEY`                | Server-only Gemini Developer API key                                                    |
+| `GEMINI_FREE_TIER_CONFIRMED`    | Must be `true` before CVs are evaluated; operator sign-off on Gemini usage for this key |
+| `RESEND_API_KEY`                | Server-only Resend key                                                                  |
+| `RESEND_FROM_EMAIL`             | Verified sender, for example `Kargo <hiring@your-domain>`                               |
 
 Create one Supabase Auth user in the dashboard, disable public sign-ups, and place its UUID in `FOUNDER_USER_ID`. Sign in at `/login`; the app opens on `/candidates`. Every private API call verifies the authenticated user with Supabase and checks the UUID. Mutations require a matching `Origin` header to prevent cross-site submissions.
 
@@ -137,7 +139,7 @@ Network failures or provider acceptance followed by a database write failure rem
 ## Free-tier limits
 
 - Supabase Free only: 100 CVs × 4 MB bounds retained originals to 400 MB, below the advertised 1 GB Storage allowance; leave room for database/egress quotas and other apps. Use a dedicated project when possible.
-- Gemini: billing must remain disabled. Application reservations cap 100 requests/day and 10/minute; actual model/account quotas may be lower and provider 429 responses stop processing with a clear quota error. No paid fallback or automatic retries.
+- Gemini: application reservations cap 100 requests/day and 10/minute; actual model/account quotas may be lower and provider 429 responses stop processing with a clear quota error. No paid fallback or automatic retries.
 - Resend: app caps 100 send reservations/day and 3,000/month. Failed/ambiguous reservations count conservatively. These limits assume the account's free allowance is not consumed by other projects; provider errors are still surfaced. Do not enable paid account overages.
 - Completed evaluations, drafts and briefs are reused. Page loads never call Gemini or generate email drafts.
 - No polling, background workers, scheduled jobs or extra paid services. Quota checks cannot override provider plan/account settings; the operator must keep every account on its Free/Hobby plan.
