@@ -54,10 +54,18 @@ export async function requestFounderLink(email: string, origin: string) {
   const url = new URL("/auth/confirm", origin);
   url.searchParams.set("token_hash", hash);
   url.searchParams.set("type", "magiclink");
-  await deliverEmail({
-    id: `auth-${reservation.data}`,
-    to: data.user.email!,
-    subject: "Sign in to Kargo",
-    body: `Use this one-time link to sign in to your private Kargo hiring workspace:\n\n${url.toString()}\n\nIf you did not request this email, ignore it.`,
-  });
+  try {
+    await deliverEmail({
+      id: `auth-${reservation.data}`,
+      to: data.user.email!,
+      subject: "Sign in to Kargo",
+      body: `Use this one-time link to sign in to your private Kargo hiring workspace:\n\n${url.toString()}\n\nIf you did not request this email, ignore it.`,
+    });
+  } catch {
+    throw new AppError(
+      "AUTH_LINK_FAILED",
+      "The sign-in email could not be sent. Sign in with your password instead.",
+      503,
+    );
+  }
 }

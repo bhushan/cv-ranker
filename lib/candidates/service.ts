@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { getSupabaseAdmin } from "../supabase/client";
-import { requireFounder, isConfigured } from "../auth";
+import { requireFounder } from "../auth";
 import { AppError } from "../errors";
 import type {
   Candidate,
@@ -10,7 +10,6 @@ import type {
   Role,
   Rubric,
 } from "../domain";
-import { getDemoData } from "../demo";
 import { rubrics as builtInRubrics } from "../evaluation/rubrics";
 import { extractDocument } from "../documents/extraction";
 import { validateDocument } from "../documents/validation";
@@ -47,10 +46,7 @@ function checked<T>(result: { data: T; error: unknown }): NonNullable<T> {
   }
   return result.data as NonNullable<T>;
 }
-export async function getDashboard(
-  mode: "demo" | "live" = "demo",
-): Promise<DashboardData> {
-  if (mode === "demo") return getDemoData(isConfigured());
+export async function getDashboard(): Promise<DashboardData> {
   await requireFounder();
   const db = getSupabaseAdmin();
   const rows = checked(
@@ -129,7 +125,7 @@ export async function getDashboard(
       ? row.processing_jobs[0]
       : row.processing_jobs,
   }));
-  return { candidates, rubrics, mode: "live", configured: true };
+  return { candidates, rubrics };
 }
 export function ranked(data: DashboardData, role: Role) {
   return rankCandidates(
@@ -156,25 +152,21 @@ export async function uploadCandidate(form: FormData) {
   const storagePath = `${candidate.id}/cv.${type === "PDF" ? "pdf" : "docx"}`;
   try {
     checked(
-      await db.storage
-        .from("kargo-candidate-cvs")
-        .upload(storagePath, bytes, {
-          contentType:
-            type === "PDF"
-              ? "application/pdf"
-              : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          upsert: false,
-        }),
+      await db.storage.from("kargo-candidate-cvs").upload(storagePath, bytes, {
+        contentType:
+          type === "PDF"
+            ? "application/pdf"
+            : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        upsert: false,
+      }),
     );
     // Original filenames can contain identities; keep only a generic name in database/API.
     checked(
-      await db
-        .from("candidate_documents")
-        .insert({
-          candidate_id: candidate.id,
-          filename: type === "PDF" ? "cv.pdf" : "cv.docx",
-          storage_path: storagePath,
-        }),
+      await db.from("candidate_documents").insert({
+        candidate_id: candidate.id,
+        filename: type === "PDF" ? "cv.pdf" : "cv.docx",
+        storage_path: storagePath,
+      }),
     );
     checked(
       await db
@@ -369,7 +361,7 @@ export async function processCandidate(
 }
 export async function reconcileShortlist() {
   const db = getSupabaseAdmin();
-  const data = await getDashboard("live");
+  const data = await getDashboard();
   const selected = new Set<string>();
   for (const role of ["PM", "SPM"] as const) {
     const top = shortlist(ranked(data, role));
@@ -398,20 +390,18 @@ export async function reconcileShortlist() {
         `Investigate the candidate's personal decision-making role, independence and how the stated results were measured.`,
       ];
       checked(
-        await db
-          .from("interview_briefs")
-          .upsert(
-            {
-              candidate_id: c.id,
-              role,
-              rubric_version: evaluation.rubric_version,
-              sentences,
-            },
-            {
-              onConflict: "candidate_id,role,rubric_version",
-              ignoreDuplicates: true,
-            },
-          ),
+        await db.from("interview_briefs").upsert(
+          {
+            candidate_id: c.id,
+            role,
+            rubric_version: evaluation.rubric_version,
+            sentences,
+          },
+          {
+            onConflict: "candidate_id,role,rubric_version",
+            ignoreDuplicates: true,
+          },
+        ),
       );
     }
   }
@@ -438,7 +428,7 @@ export async function reconcileShortlist() {
   }
 }
 export async function validateDraftSelection(draftId: string) {
-  const data = await getDashboard("live");
+  const data = await getDashboard();
   const c = data.candidates.find((c) => c.email?.id === draftId);
   if (!c?.email) throw new AppError("NOT_FOUND", "Email draft not found.", 404);
   const selected = ["PM", "SPM"].some((role) =>

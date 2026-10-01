@@ -2,7 +2,7 @@
 
 A founder-controlled hiring intelligence MVP for MESA Case Study 2, “Arjun and the Hiring Backlog”. Upload a PDF or DOCX once, evaluate the professional content against both historically calibrated PM and SPM rubrics, review evidence and interview briefs, then explicitly approve individual emails.
 
-The public landing workspace opens with 12 synthetic candidates, both evaluations, separate role rankings, three-sentence briefs and invitation/rejection drafts. Demo edits and simulated sends persist in the current browser session. **Demo sends do not deliver email.** Real CV processing and delivery require the protected founder workspace and configured services.
+The app is login-only: `/` sends signed-out visitors to `/login`. After sign-in the founder works across Candidates, a page per candidate, Rankings, Outbox (a review queue that moves to the next draft after each decision), Upload (with step-by-step progress) and Rubrics. An empty workspace offers to add 12 synthetic sample candidates. There is no public demo mode.
 
 ## Architecture
 
@@ -80,7 +80,7 @@ Apply migrations in order:
 
 All application tables enable RLS and deny anonymous/authenticated direct access. All private reads and writes pass through founder-authorized route handlers using the server-only service-role client. Security-definer RPCs are revoked from public roles and executable only by `service_role`. Tables and RPCs live in the isolated `kargo` schema; existing application tables remain untouched. Add `kargo` to exposed API schemas while preserving existing schemas. Storage bucket `kargo-candidate-cvs` is private with a 4 MB limit and PDF/DOCX MIME restrictions.
 
-Database RPCs atomically claim processing leases, reserve AI/email quota, enforce a 100-candidate upload cap, save evaluation results, and claim email sends. Synthetic demo records can be optionally seeded in the private workspace using founder-authenticated `POST /api/demo/seed` from the same origin. Public demo data remains separate and never writes to live tables.
+Database RPCs atomically claim processing leases, reserve AI/email quota, enforce a 100-candidate upload cap, save evaluation results, and claim email sends. Synthetic sample records can be seeded into an empty workspace from the Candidates empty state (founder-authenticated `POST /api/demo/seed`, same origin).
 
 ## Local setup
 
@@ -99,7 +99,7 @@ The production compiler uses `next build`. On a machine that restricts Turbopack
 
 ## Environment variables
 
-Set these directly in the Vercel project. Never commit values or paste keys into chat. The public demo runs without them.
+Set these directly in the Vercel project. Never commit values or paste keys into chat.
 
 | Variable                        | Purpose                                                   |
 | ------------------------------- | --------------------------------------------------------- |
@@ -112,7 +112,7 @@ Set these directly in the Vercel project. Never commit values or paste keys into
 | `RESEND_API_KEY`                | Server-only Resend key                                    |
 | `RESEND_FROM_EMAIL`             | Verified sender, for example `Kargo <hiring@your-domain>` |
 
-Create one Supabase Auth user in the dashboard, disable public sign-ups, and place its UUID in `FOUNDER_USER_ID`. Sign in at `/login`, then enter `/?mode=live`. Every private API call verifies the authenticated user with Supabase and checks the UUID. Mutations require a matching `Origin` header to prevent cross-site submissions.
+Create one Supabase Auth user in the dashboard, disable public sign-ups, and place its UUID in `FOUNDER_USER_ID`. Sign in at `/login`; the app opens on `/candidates`. Every private API call verifies the authenticated user with Supabase and checks the UUID. Mutations require a matching `Origin` header to prevent cross-site submissions.
 
 ## Vercel Hobby deployment
 
@@ -143,18 +143,19 @@ Network failures or provider acceptance followed by a database write failure rem
 - No polling, background workers, scheduled jobs or extra paid services. Quota checks cannot override provider plan/account settings; the operator must keep every account on its Free/Hobby plan.
 - Free Supabase projects can pause for inactivity. The app shows setup/database errors instead of falling back elsewhere.
 
-## Verification and demo flow
+## Verification and walkthrough
 
 Tests exercise normal/zero/maximum/weighted scores, invalid evidence and IDs, stable ranking ties/top five, identity exclusion, PDF/DOCX fixtures, real PostgreSQL migration execution in PGlite, atomic inserts/rollback, concurrent send claims, stale approvals and quotas. PGlite stubs only the Supabase Storage metadata table and roles; it does not replace live integration verification.
 
-One-minute demo:
+One-minute walkthrough:
 
-1. Open the dashboard with useful synthetic data.
-2. Open Rankings and select PM or SPM.
-3. Open the first candidate, inspect criterion evidence and the three-sentence brief.
-4. Select Review email draft; edit if desired.
-5. Approve and simulate send, then see the Sent status. This public flow never sends real email.
-6. For a live demo, sign in, upload a fictional CV, finish both evaluations, and explicitly approve delivery to an authorized test inbox.
+1. Sign in. If the workspace is empty, add the 12 sample candidates.
+2. Open Rankings and switch between Product Manager and Senior Product Manager; the dashed line marks the top-five shortlist.
+3. Open a candidate to read the criterion evidence and the three-sentence interview brief.
+4. Open Outbox, edit a draft if needed, then Approve and send. Sample candidates use example.com addresses, so only send to an authorized test inbox.
+5. Upload a fictional CV and watch it move through the four processing steps.
+
+`node scripts/verify-deployment.mjs <url>` checks a deployment without credentials: redirects to sign-in and protected APIs.
 
 See [deployment verification](docs/verification.md) for what was actually checked and remaining setup. A live provider workflow must not be marked complete until Supabase, Gemini and Resend are configured and verified.
 

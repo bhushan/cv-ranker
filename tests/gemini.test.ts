@@ -16,32 +16,30 @@ afterEach(() => {
 });
 describe("structured AI boundary", () => {
   it("sends only sanitized professional payload, validates criteria and computes the final score locally", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    text: JSON.stringify({
-                      criteria: rubrics[0].criteria.map((c) => ({
-                        criterion_id: c.id,
-                        score: 8,
-                        evidence:
-                          "Built a shipment triage tool adopted by three operational teams and reduced unresolved exceptions by 28 percent.",
-                        reasoning: "Specific personal action and adoption.",
-                        confidence: 0.8,
-                      })),
-                    }),
-                  },
-                ],
-              },
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: JSON.stringify({
+                    criteria: rubrics[0].criteria.map((c) => ({
+                      criterion_id: c.id,
+                      score: 8,
+                      evidence:
+                        "Built a shipment triage tool adopted by three operational teams and reduced unresolved exceptions by 28 percent.",
+                      reasoning: "Specific personal action and adoption.",
+                      confidence: 0.8,
+                    })),
+                  }),
+                },
+              ],
             },
-          ],
-        }),
-      );
+          },
+        ],
+      }),
+    );
     vi.stubGlobal("fetch", fetcher);
     const result = await evaluate(
       "00000000-0000-4000-8000-000000000001",
@@ -62,19 +60,17 @@ describe("structured AI boundary", () => {
   it("rejects malformed structured responses without saving or fabricating a score", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(
-          Response.json({
-            candidates: [
-              {
-                content: {
-                  parts: [{ text: '{"criteria":[] , "overall_score":100}' }],
-                },
+      vi.fn().mockResolvedValue(
+        Response.json({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: '{"criteria":[] , "overall_score":100}' }],
               },
-            ],
-          }),
-        ),
+            },
+          ],
+        }),
+      ),
     );
     await expect(evaluate("id", cv(), rubrics[0])).rejects.toMatchObject({
       code: "GEMINI_INVALID_RESPONSE",

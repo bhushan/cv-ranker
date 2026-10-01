@@ -2,16 +2,9 @@ import "server-only";
 import { ZodError } from "zod";
 import { requireFounder, requireSameOrigin } from "./auth";
 import { AppError, errorResponse } from "./errors";
-export async function api(
-  request: Request,
-  action: () => Promise<unknown>,
-  options: { publicDemo?: boolean } = {},
-) {
+export async function api(request: Request, action: () => Promise<unknown>) {
   try {
-    const demo =
-      options.publicDemo &&
-      new URL(request.url).searchParams.get("mode") === "demo";
-    if (!demo) await requireFounder();
+    await requireFounder();
     if (request.method !== "GET") requireSameOrigin(request);
     return Response.json(await action(), {
       headers: { "Cache-Control": "no-store" },

@@ -57,3 +57,12 @@ it.each(["AUTH_LINK_RATE_LIMITED", "RESEND_QUOTA_EXCEEDED"])(
     expect(mocks.deliver).not.toHaveBeenCalled();
   },
 );
+it("explains a failed sign-in email without referring to draft reconciliation", async () => {
+  mocks.deliver.mockRejectedValue(new Error("provider rejected"));
+  await expect(
+    requestFounderLink("founder@example.com", "https://kargo.example.com"),
+  ).rejects.toMatchObject({
+    code: "AUTH_LINK_FAILED",
+    message: expect.stringContaining("password"),
+  });
+});

@@ -34,6 +34,4 @@ export type Candidate = {
 export type DashboardData = {
   candidates: Candidate[];
   rubrics: Rubric[];
-  mode: "demo" | "live";
-  configured: boolean;
 };

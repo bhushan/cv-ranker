@@ -34,12 +34,24 @@ afterAll(async () => {
 });
 describe("real PostgreSQL migrations and atomic persistence", () => {
   it("isolates Kargo tables and storage from existing public application data", async () => {
-    const legacy = await db.query<{ marker: string }>("select marker from public.candidates");
+    const legacy = await db.query<{ marker: string }>(
+      "select marker from public.candidates",
+    );
     expect(legacy.rows).toEqual([{ marker: "existing meera data" }]);
-    const bucket = await db.query<{ id: string; public: boolean }>("select id,public from storage.buckets");
+    const bucket = await db.query<{ id: string; public: boolean }>(
+      "select id,public from storage.buckets",
+    );
     expect(bucket.rows).toEqual([{ id: "kargo-candidate-cvs", public: false }]);
-    const grants = await db.query<{ anon: boolean; authenticated: boolean; service: boolean }>("select has_schema_privilege('anon','kargo','USAGE') anon,has_schema_privilege('authenticated','kargo','USAGE') authenticated,has_schema_privilege('service_role','kargo','USAGE') service");
-    expect(grants.rows).toEqual([{ anon: false, authenticated: false, service: true }]);
+    const grants = await db.query<{
+      anon: boolean;
+      authenticated: boolean;
+      service: boolean;
+    }>(
+      "select has_schema_privilege('anon','kargo','USAGE') anon,has_schema_privilege('authenticated','kargo','USAGE') authenticated,has_schema_privilege('service_role','kargo','USAGE') service",
+    );
+    expect(grants.rows).toEqual([
+      { anon: false, authenticated: false, service: true },
+    ]);
   });
   it("stores both historically sourced rubric versions with weights totaling 100", async () => {
     const r = await db.query<{ role: string; weight: number }>(

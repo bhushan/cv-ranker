@@ -15,7 +15,7 @@ export async function GET(request: Request) {
         type: "magiclink",
       });
       if (!error && data.user?.id === process.env.FOUNDER_USER_ID)
-        return NextResponse.redirect(new URL("/?mode=live", url.origin));
+        return NextResponse.redirect(new URL("/candidates", url.origin));
       await client.auth.signOut();
     } catch {
       /* Redirect without exposing authentication details. */
