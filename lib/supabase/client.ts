@@ -5,6 +5,7 @@ export function getSupabaseAdmin() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("SUPABASE_NOT_CONFIGURED");
   return createClient(url, key, {
+    db: { schema: "kargo" },
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

@@ -7,7 +7,7 @@ let draft: string;
 let revision: string;
 beforeAll(async () => {
   db = new PGlite();
-  await db.exec(`create role anon; create role authenticated; create role service_role; create schema storage;
+  await db.exec(`create role anon; create role authenticated; create role service_role; create schema storage; create table public.candidates(marker text); insert into public.candidates values('existing meera data');
  create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`);
   const schema = readFileSync(
     "supabase/migrations/001_schema.sql",
@@ -17,6 +17,7 @@ beforeAll(async () => {
   await db.exec(
     readFileSync("supabase/migrations/002_historical_rubrics.sql", "utf8"),
   );
+  await db.exec("set search_path = kargo");
   const c = await db.query<{ id: string }>(
     `select id from create_candidate('PM')`,
   );
@@ -32,6 +33,14 @@ afterAll(async () => {
   await db?.close();
 });
 describe("real PostgreSQL migrations and atomic persistence", () => {
+  it("isolates Kargo tables and storage from existing public application data", async () => {
+    const legacy = await db.query<{ marker: string }>("select marker from public.candidates");
+    expect(legacy.rows).toEqual([{ marker: "existing meera data" }]);
+    const bucket = await db.query<{ id: string; public: boolean }>("select id,public from storage.buckets");
+    expect(bucket.rows).toEqual([{ id: "kargo-candidate-cvs", public: false }]);
+    const grants = await db.query<{ anon: boolean; authenticated: boolean; service: boolean }>("select has_schema_privilege('anon','kargo','USAGE') anon,has_schema_privilege('authenticated','kargo','USAGE') authenticated,has_schema_privilege('service_role','kargo','USAGE') service");
+    expect(grants.rows).toEqual([{ anon: false, authenticated: false, service: true }]);
+  });
   it("stores both historically sourced rubric versions with weights totaling 100", async () => {
     const r = await db.query<{ role: string; weight: number }>(
       `select role,sum((c->>'weight')::numeric)::int weight from rubrics,jsonb_array_elements(criteria_json->'criteria') c group by role`,
@@ -176,7 +185,7 @@ describe("atomic synthetic seed", () => {
     const seedDb = new PGlite();
     try {
       await seedDb.exec(
-        `create role anon; create role authenticated; create role service_role; create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`,
+        `create role anon; create role authenticated; create role service_role; create schema storage; create table public.candidates(marker text); insert into public.candidates values('existing meera data'); create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`,
       );
       await seedDb.exec(
         readFileSync("supabase/migrations/001_schema.sql", "utf8").replace(
@@ -190,6 +199,7 @@ describe("atomic synthetic seed", () => {
       await seedDb.exec(
         readFileSync("supabase/migrations/003_atomic_seed.sql", "utf8"),
       );
+      await seedDb.exec("set search_path = kargo");
       const rubrics = await seedDb.query<{
         role: string;
         criteria: { id: string }[];

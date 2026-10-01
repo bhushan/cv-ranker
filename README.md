@@ -76,8 +76,9 @@ Apply migrations in order:
 1. `supabase/migrations/001_schema.sql`: candidates, identity, documents, rubrics, evaluations, criterion scores, emails, processing jobs, interview briefs and quota reservations; foreign keys, indexes, checks and atomic functions.
 2. `supabase/migrations/002_historical_rubrics.sql`: versioned PM/SPM rubrics from the historical hires.
 3. `supabase/migrations/003_atomic_seed.sql`: all-or-nothing synthetic demo seeding for an empty private workspace.
+4. `supabase/migrations/004_auth_link.sql`: founder email-link throttling and shared email quota reservations.
 
-All application tables enable RLS and deny anonymous/authenticated direct access. All private reads and writes pass through founder-authorized route handlers using the server-only service-role client. Security-definer RPCs are revoked from public roles and executable only by `service_role`. Storage bucket `candidate-cvs` is private with a 4 MB limit and PDF/DOCX MIME restrictions.
+All application tables enable RLS and deny anonymous/authenticated direct access. All private reads and writes pass through founder-authorized route handlers using the server-only service-role client. Security-definer RPCs are revoked from public roles and executable only by `service_role`. Tables and RPCs live in the isolated `kargo` schema; existing application tables remain untouched. Add `kargo` to exposed API schemas while preserving existing schemas. Storage bucket `kargo-candidate-cvs` is private with a 4 MB limit and PDF/DOCX MIME restrictions.
 
 Database RPCs atomically claim processing leases, reserve AI/email quota, enforce a 100-candidate upload cap, save evaluation results, and claim email sends. Synthetic demo records can be optionally seeded in the private workspace using founder-authenticated `POST /api/demo/seed` from the same origin. Public demo data remains separate and never writes to live tables.
 
@@ -156,3 +157,5 @@ One-minute demo:
 6. For a live demo, sign in, upload a fictional CV, finish both evaluations, and explicitly approve delivery to an authorized test inbox.
 
 See [deployment verification](docs/verification.md) for what was actually checked and remaining setup. A live provider workflow must not be marked complete until Supabase, Gemini and Resend are configured and verified.
+
+Founder sign-in supports a password or a one-time email link. Create the authorized founder in Supabase Auth and configure their UUID as `FOUNDER_USER_ID` in Vercel, then redeploy. Email links are sent only when the matching founder requests one, and share the free email budget with hiring invitations.

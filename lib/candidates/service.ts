@@ -157,7 +157,7 @@ export async function uploadCandidate(form: FormData) {
   try {
     checked(
       await db.storage
-        .from("candidate-cvs")
+        .from("kargo-candidate-cvs")
         .upload(storagePath, bytes, {
           contentType:
             type === "PDF"
@@ -183,7 +183,7 @@ export async function uploadCandidate(form: FormData) {
     );
     return { candidate: { id: candidate.id, status: "UPLOADED" } };
   } catch (error) {
-    await db.storage.from("candidate-cvs").remove([storagePath]);
+    await db.storage.from("kargo-candidate-cvs").remove([storagePath]);
     await db.from("candidates").delete().eq("id", candidate.id);
     throw error;
   }
@@ -198,7 +198,7 @@ async function loadDocument(candidateId: string) {
       .single(),
   );
   const file = checked(
-    await db.storage.from("candidate-cvs").download(doc.storage_path),
+    await db.storage.from("kargo-candidate-cvs").download(doc.storage_path),
   );
   const raw = await extractDocument(
     doc.filename,

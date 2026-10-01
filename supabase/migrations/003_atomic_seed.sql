@@ -1,6 +1,6 @@
 -- All-or-nothing, founder-triggered seed. Uses the same capacity lock as uploads.
-create function public.seed_synthetic_candidates(payload jsonb) returns integer
-language plpgsql security definer set search_path=public as $$
+create function kargo.seed_synthetic_candidates(payload jsonb) returns integer
+language plpgsql security definer set search_path=kargo as $$
 declare c jsonb; e jsonb; b record; total integer; begin
  perform pg_advisory_xact_lock(714094);
  if exists(select 1 from candidates) then raise exception 'SEED_NOT_EMPTY'; end if;
@@ -29,5 +29,5 @@ declare c jsonb; e jsonb; b record; total integer; begin
  end loop;
  return total;
 end $$;
-revoke all on function public.seed_synthetic_candidates(jsonb) from public,anon,authenticated;
-grant execute on function public.seed_synthetic_candidates(jsonb) to service_role;
+revoke all on function kargo.seed_synthetic_candidates(jsonb) from public,anon,authenticated;
+grant execute on function kargo.seed_synthetic_candidates(jsonb) to service_role;
