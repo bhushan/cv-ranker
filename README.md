@@ -100,16 +100,16 @@ The production compiler uses `next build`. On a machine that restricts Turbopack
 
 Set these directly in the Vercel project. Never commit values or paste keys into chat. The public demo runs without them.
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anonymous key for founder authentication |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only database and private storage access |
-| `FOUNDER_USER_ID` | UUID of the single permitted Supabase Auth user |
-| `GEMINI_API_KEY` | Server-only Gemini Developer API key |
-| `GEMINI_FREE_TIER_CONFIRMED` | Must be `true`; operator confirms billing is disabled |
-| `RESEND_API_KEY` | Server-only Resend key |
-| `RESEND_FROM_EMAIL` | Verified sender, for example `Kargo <hiring@your-domain>` |
+| Variable                        | Purpose                                                   |
+| ------------------------------- | --------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anonymous key for founder authentication  |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only database and private storage access           |
+| `FOUNDER_USER_ID`               | UUID of the single permitted Supabase Auth user           |
+| `GEMINI_API_KEY`                | Server-only Gemini Developer API key                      |
+| `GEMINI_FREE_TIER_CONFIRMED`    | Must be `true`; operator confirms billing is disabled     |
+| `RESEND_API_KEY`                | Server-only Resend key                                    |
+| `RESEND_FROM_EMAIL`             | Verified sender, for example `Kargo <hiring@your-domain>` |
 
 Create one Supabase Auth user in the dashboard, disable public sign-ups, and place its UUID in `FOUNDER_USER_ID`. Sign in at `/login`, then enter `/?mode=live`. Every private API call verifies the authenticated user with Supabase and checks the UUID. Mutations require a matching `Origin` header to prevent cross-site submissions.
 

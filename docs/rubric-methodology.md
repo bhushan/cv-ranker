@@ -6,13 +6,13 @@ The CVs do not contain full interview notes or post-hire outcome narratives. Rat
 
 Three recurring patterns distinguish the stronger examples: direct operational workflow experience; independently creating practical changes that teams adopt; and taking ownership of difficult problems through closure and learning. Five criteria operationalize these patterns. Each rubric criterion records its specific source hires and rationale. Job descriptions supply role context only and supply no criteria, weights, experience requirements or education filters.
 
-| Criterion | PM weight | SPM weight |
-| --- | ---: | ---: |
-| Field-level workflow understanding | 25 | 25 |
-| Self-started improvements that stuck | 25 | 20 |
-| Independent ownership through closure | 20 | 30 |
-| Learning from uncomfortable decisions | 15 | 15 |
-| Operational results beyond output | 15 | 10 |
+| Criterion                             | PM weight | SPM weight |
+| ------------------------------------- | --------: | ---------: |
+| Field-level workflow understanding    |        25 |         25 |
+| Self-started improvements that stuck  |        25 |         20 |
+| Independent ownership through closure |        20 |         30 |
+| Learning from uncomfortable decisions |        15 |         15 |
+| Operational results beyond output     |        15 |         10 |
 
 Weights are explicit design judgments informed by recurrence, not statistically learned values. SPM raises the independence bar; years of experience, titles, education, location and identity do not contribute to scores. Independent ownership and measurable outcomes also occur in lower-rated hires, so neither is sufficient alone. Failure-learning evidence occurs in fewer profiles and is a weaker hypothesis.
 
