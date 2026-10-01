@@ -1,104 +1,50 @@
-"use client";
-import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-export default function Login() {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
+import { redirect } from "next/navigation";
+import { LoginForm } from "@/components/login-form";
+import { Logo } from "@/components/logo";
+import { requireFounder } from "@/lib/auth";
+export const dynamic = "force-dynamic";
+async function signedIn() {
+  try {
+    await requireFounder();
+    return true;
+  } catch {
+    return false;
+  }
+}
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  if (await signedIn()) redirect("/candidates");
+  const { error } = await searchParams;
   return (
-    <main className="login-wrap">
-      <form
-        className="login-card"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          const form = new FormData(e.currentTarget);
-          try {
-            const res = await fetch("/api/auth/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: form.get("email"),
-                password: form.get("password"),
-              }),
-            });
-            const data = await res.json();
-            if (!res.ok)
-              throw new Error(data.error?.message || "Sign in failed.");
-            router.push("/?mode=live");
-            router.refresh();
-          } catch (err) {
-            setError(err instanceof Error ? err.message : "Sign in failed.");
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <span className="logo-mark">k</span>
-        <h1>Founder sign in</h1>
-        <p>Access your private Kargo hiring workspace.</p>
-        <label>
-          Email
-          <input name="email" type="email" autoComplete="email" required />
-        </label>
-        <label>
-          Password
-          <input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-          />
-        </label>
-        {error && (
-          <p className="error" role="alert">
-            {error}
+    <main className="login">
+      <section className="login-intro">
+        <Logo inverse />
+        <div>
+          <h1>Hire the way your best people were hired.</h1>
+          <p>
+            Every CV is scored against what Kargo’s eight historical hires had
+            in common. You see the evidence behind each score and approve every
+            email before it goes out.
           </p>
-        )}
-        <Button disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={busy}
-          onClick={async (event) => {
-            const form = event.currentTarget.closest("form")!;
-            const email = form.querySelector<HTMLInputElement>(
-              'input[name="email"]',
-            )!;
-            if (!email.reportValidity()) return;
-            setBusy(true);
-            setError("");
-            setMessage("");
-            try {
-              const response = await fetch("/api/auth/link", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.value }),
-              });
-              const result = await response.json();
-              if (!response.ok)
-                throw new Error(
-                  result.error?.message || "Unable to request sign-in email.",
-                );
-              setMessage(result.message);
-            } catch (err) {
-              setError(
-                err instanceof Error
-                  ? err.message
-                  : "Unable to request sign-in email.",
-              );
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          Email me a sign-in link
-        </Button>
-        {message && <p role="status">{message}</p>}
-        <Link href="/">Explore the demo workspace</Link>
-      </form>
+        </div>
+        <ul className="login-points">
+          <li>Scored for PM and SPM from one upload</li>
+          <li>Names and contact details removed before scoring</li>
+          <li>Nothing is sent without your approval</li>
+        </ul>
+      </section>
+      <section className="login-pane">
+        <LoginForm
+          initialError={
+            error === "invalid_link"
+              ? "That sign-in link has expired or was already used. Sign in with your password, or request a new link."
+              : ""
+          }
+        />
+      </section>
     </main>
   );
 }

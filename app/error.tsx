@@ -1,17 +1,19 @@
 "use client";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 export default function ErrorPage({ reset }: { reset: () => void }) {
   return (
-    <main style={{ maxWidth: 600, margin: "15vh auto", padding: 32 }}>
+    <main className="plain-page">
       <h1>The workspace could not load.</h1>
       <p>
-        Check that the Supabase migrations and environment variables are
-        configured, then retry.
+        The database or a required setting is unavailable. Retry, and if it
+        keeps failing, check the Supabase migrations and Vercel environment
+        variables.
       </p>
-      <button onClick={reset}>Try again</button>
-      <p>
-        <Link href="/">Open the synthetic demo</Link>
-      </p>
+      <Button onClick={reset}>Try again</Button>
+      <Link className="text-button" href="/login">
+        Back to sign in
+      </Link>
     </main>
   );
 }

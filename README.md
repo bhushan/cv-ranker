@@ -1,8 +1,10 @@
-# Kargo Hiring Dashboard
+# Kargo Hiring
+
+Live app: <https://kargo-hiring-dashboard-alpha.vercel.app> (founder sign-in only).
 
 A founder-controlled hiring intelligence MVP for MESA Case Study 2, “Arjun and the Hiring Backlog”. Upload a PDF or DOCX once, evaluate the professional content against both historically calibrated PM and SPM rubrics, review evidence and interview briefs, then explicitly approve individual emails.
 
-The public landing workspace opens with 12 synthetic candidates, both evaluations, separate role rankings, three-sentence briefs and invitation/rejection drafts. Demo edits and simulated sends persist in the current browser session. **Demo sends do not deliver email.** Real CV processing and delivery require the protected founder workspace and configured services.
+The app is login-only: `/` sends signed-out visitors to `/login`. After sign-in the founder works across Candidates, a page per candidate, Rankings, Outbox (a review queue that moves to the next draft after each decision), Upload (with step-by-step progress) and Rubrics. An empty workspace offers to add 12 synthetic sample candidates. There is no public demo mode.
 
 ## Architecture
 
@@ -10,7 +12,7 @@ Next.js App Router, TypeScript, Tailwind CSS, local shadcn/ui components with Ra
 
 ```mermaid
 flowchart TD
-  Founder[Founder in authenticated dashboard] --> Upload[POST candidates: validate PDF/DOCX, max 4 MB]
+  Founder[Signed-in founder] --> Upload[POST candidates: validate PDF/DOCX, max 4 MB]
   Upload --> Storage[Supabase private CV bucket]
   Upload --> Jobs[Persisted processing stage]
   Jobs --> Parse[Explicit server request: parse and separate identity]
@@ -56,7 +58,7 @@ Rule-based redaction is conservative but does not prove anonymization of arbitra
 
 Server-only REST requests to `gemini-2.5-flash` use JSON Schema output and Zod validation. CV text is untrusted data; the system prompt instructs Gemini to ignore embedded instructions, avoid unsupported inferences and use professional evidence only. No provider/model fallback is configured.
 
-The response must contain exactly the rubric's criterion IDs, bounded scores from 0–10, confidence from 0–1, an exact contiguous evidence excerpt, and concise reasoning. Evidence is checked against the sanitized source after whitespace/case normalization. Missing evidence must have score 0 and is visibly distinguished from a weak evidenced score. Unsupported quotes or malformed outputs produce `GEMINI_INVALID_RESPONSE`.
+The response must contain exactly the rubric's criterion IDs, bounded scores from 0–10, confidence from 0–1, an exact contiguous evidence excerpt, and concise reasoning. Evidence is checked against the sanitized source ignoring only typography (case, whitespace, quote and dash styles, bullet glyphs, spacing before punctuation, a trailing full stop); an excerpt joined by an ellipsis passes only if every fragment appears in order. A criterion whose quote still cannot be found, or that the model skipped, is stored as score 0 with "Evidence unavailable" and an explanation, so unverified text is never saved or shown. Missing evidence is visibly distinguished from a weak evidenced score. Malformed outputs produce `GEMINI_INVALID_RESPONSE`.
 
 ```text
 criterion contribution = (criterion score / 10) × criterion weight
@@ -80,7 +82,7 @@ Apply migrations in order:
 
 All application tables enable RLS and deny anonymous/authenticated direct access. All private reads and writes pass through founder-authorized route handlers using the server-only service-role client. Security-definer RPCs are revoked from public roles and executable only by `service_role`. Tables and RPCs live in the isolated `kargo` schema; existing application tables remain untouched. Add `kargo` to exposed API schemas while preserving existing schemas. Storage bucket `kargo-candidate-cvs` is private with a 4 MB limit and PDF/DOCX MIME restrictions.
 
-Database RPCs atomically claim processing leases, reserve AI/email quota, enforce a 100-candidate upload cap, save evaluation results, and claim email sends. Synthetic demo records can be optionally seeded in the private workspace using founder-authenticated `POST /api/demo/seed` from the same origin. Public demo data remains separate and never writes to live tables.
+Database RPCs atomically claim processing leases, reserve AI/email quota, enforce a 100-candidate upload cap, save evaluation results, and claim email sends. Synthetic sample records can be seeded into an empty workspace from the Candidates empty state (founder-authenticated `POST /api/demo/seed`, same origin).
 
 ## Local setup
 
@@ -99,20 +101,20 @@ The production compiler uses `next build`. On a machine that restricts Turbopack
 
 ## Environment variables
 
-Set these directly in the Vercel project. Never commit values or paste keys into chat. The public demo runs without them.
+Set these directly in the Vercel project. Never commit values or paste keys into chat.
 
-| Variable                        | Purpose                                                   |
-| ------------------------------- | --------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                      |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anonymous key for founder authentication  |
-| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only database and private storage access           |
-| `FOUNDER_USER_ID`               | UUID of the single permitted Supabase Auth user           |
-| `GEMINI_API_KEY`                | Server-only Gemini Developer API key                      |
-| `GEMINI_FREE_TIER_CONFIRMED`    | Must be `true`; operator confirms billing is disabled     |
-| `RESEND_API_KEY`                | Server-only Resend key                                    |
-| `RESEND_FROM_EMAIL`             | Verified sender, for example `Kargo <hiring@your-domain>` |
+| Variable                        | Purpose                                                                                 |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL                                                                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anonymous key for founder authentication                                |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Server-only database and private storage access                                         |
+| `FOUNDER_USER_ID`               | UUID of the single permitted Supabase Auth user                                         |
+| `GEMINI_API_KEY`                | Server-only Gemini Developer API key                                                    |
+| `GEMINI_FREE_TIER_CONFIRMED`    | Must be `true` before CVs are evaluated; operator sign-off on Gemini usage for this key |
+| `RESEND_API_KEY`                | Server-only Resend key                                                                  |
+| `RESEND_FROM_EMAIL`             | Verified sender, for example `Kargo <hiring@your-domain>`                               |
 
-Create one Supabase Auth user in the dashboard, disable public sign-ups, and place its UUID in `FOUNDER_USER_ID`. Sign in at `/login`, then enter `/?mode=live`. Every private API call verifies the authenticated user with Supabase and checks the UUID. Mutations require a matching `Origin` header to prevent cross-site submissions.
+Create one Supabase Auth user in the dashboard, disable public sign-ups, and place its UUID in `FOUNDER_USER_ID`. Sign in at `/login`; the app opens on `/candidates`. Every private API call verifies the authenticated user with Supabase and checks the UUID. Mutations require a matching `Origin` header to prevent cross-site submissions.
 
 ## Vercel Hobby deployment
 
@@ -137,24 +139,25 @@ Network failures or provider acceptance followed by a database write failure rem
 ## Free-tier limits
 
 - Supabase Free only: 100 CVs × 4 MB bounds retained originals to 400 MB, below the advertised 1 GB Storage allowance; leave room for database/egress quotas and other apps. Use a dedicated project when possible.
-- Gemini: billing must remain disabled. Application reservations cap 100 requests/day and 10/minute; actual model/account quotas may be lower and provider 429 responses stop processing with a clear quota error. No paid fallback or automatic retries.
+- Gemini: application reservations cap 100 requests/day and 10/minute; actual model/account quotas may be lower and provider 429 responses stop processing with a clear quota error. No paid fallback or automatic retries.
 - Resend: app caps 100 send reservations/day and 3,000/month. Failed/ambiguous reservations count conservatively. These limits assume the account's free allowance is not consumed by other projects; provider errors are still surfaced. Do not enable paid account overages.
 - Completed evaluations, drafts and briefs are reused. Page loads never call Gemini or generate email drafts.
 - No polling, background workers, scheduled jobs or extra paid services. Quota checks cannot override provider plan/account settings; the operator must keep every account on its Free/Hobby plan.
 - Free Supabase projects can pause for inactivity. The app shows setup/database errors instead of falling back elsewhere.
 
-## Verification and demo flow
+## Verification and walkthrough
 
 Tests exercise normal/zero/maximum/weighted scores, invalid evidence and IDs, stable ranking ties/top five, identity exclusion, PDF/DOCX fixtures, real PostgreSQL migration execution in PGlite, atomic inserts/rollback, concurrent send claims, stale approvals and quotas. PGlite stubs only the Supabase Storage metadata table and roles; it does not replace live integration verification.
 
-One-minute demo:
+One-minute walkthrough:
 
-1. Open the dashboard with useful synthetic data.
-2. Open Rankings and select PM or SPM.
-3. Open the first candidate, inspect criterion evidence and the three-sentence brief.
-4. Select Review email draft; edit if desired.
-5. Approve and simulate send, then see the Sent status. This public flow never sends real email.
-6. For a live demo, sign in, upload a fictional CV, finish both evaluations, and explicitly approve delivery to an authorized test inbox.
+1. Sign in. If the workspace is empty, add the 12 sample candidates.
+2. Open Rankings and switch between Product Manager and Senior Product Manager; the dashed line marks the top-five shortlist.
+3. Open a candidate to read the criterion evidence and the three-sentence interview brief.
+4. Open Outbox, edit a draft if needed, then Approve and send. Sample candidates use example.com addresses, so only send to an authorized test inbox.
+5. Upload a fictional CV and watch it move through the four processing steps.
+
+`node scripts/verify-deployment.mjs <url>` checks a deployment without credentials: redirects to sign-in and protected APIs.
 
 See [deployment verification](docs/verification.md) for what was actually checked and remaining setup. A live provider workflow must not be marked complete until Supabase, Gemini and Resend are configured and verified.
 

@@ -5,7 +5,10 @@ export async function POST(request: Request) {
   try {
     requireSameOrigin(request);
     const { email, password } = z
-      .object({ email: z.string().trim().toLowerCase().pipe(z.email()), password: z.string().min(1).max(200) })
+      .object({
+        email: z.string().trim().toLowerCase().pipe(z.email()),
+        password: z.string().min(1).max(200),
+      })
       .parse(await request.json());
     const client = await authClient();
     const { data, error } = await client.auth.signInWithPassword({

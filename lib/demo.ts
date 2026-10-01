@@ -194,11 +194,7 @@ for (const c of demoCandidates)
     candidate_id: c.id,
     updated_at: c.created_at,
   };
-export function getDemoData(configured = false): DashboardData {
-  return {
-    candidates: structuredClone(demoCandidates),
-    rubrics,
-    mode: "demo",
-    configured,
-  };
+/** Synthetic candidates used to seed an empty workspace and in tests. */
+export function getDemoData(): DashboardData {
+  return { candidates: structuredClone(demoCandidates), rubrics };
 }
