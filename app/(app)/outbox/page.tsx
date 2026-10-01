@@ -1,5 +1,6 @@
 import { getWorkspace } from "@/lib/workspace";
 import { Outbox } from "@/components/outbox";
+import { scoreFor } from "@/lib/view";
 export default async function OutboxPage({
   searchParams,
 }: {
@@ -9,12 +10,18 @@ export default async function OutboxPage({
     searchParams,
     getWorkspace(),
   ]);
+  // Pending first, invitations before rejections, strongest candidate first.
+  const best = (c: (typeof candidates)[number]) =>
+    Math.max(scoreFor(c, "PM") ?? 0, scoreFor(c, "SPM") ?? 0);
   const withEmail = candidates
     .filter((c) => c.email)
     .sort(
       (a, b) =>
         Number(b.email!.status === "PENDING_REVIEW") -
-        Number(a.email!.status === "PENDING_REVIEW"),
+          Number(a.email!.status === "PENDING_REVIEW") ||
+        Number(b.email!.type === "INVITATION") -
+          Number(a.email!.type === "INVITATION") ||
+        best(b) - best(a),
     );
   const selected =
     withEmail.find((c) => c.email!.id === draft) ??
