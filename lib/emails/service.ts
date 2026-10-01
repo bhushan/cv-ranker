@@ -4,6 +4,7 @@ import { AppError } from "../errors";
 import { getSupabaseAdmin } from "../supabase/client";
 import { deliverEmail } from "../resend/client";
 import { assertCanSend } from "./drafts";
+import { isSyntheticAddress } from "../view";
 export const emailEditSchema = z
   .object({
     expected_updated_at: z.string().datetime({ offset: true }),
@@ -45,6 +46,8 @@ export async function sendEmail(
       503,
     );
   const db = getSupabaseAdmin();
+  // Check the recipient before claiming, so an unsendable draft is never locked.
+  const recipient = await recipientFor(id);
   const { data: draft, error } = await db.rpc("claim_email_send", {
     draft_id: id,
     expected_updated_at: expectedUpdatedAt,
@@ -65,25 +68,10 @@ export async function sendEmail(
       409,
     );
   }
-  const { data: identity, error: identityError } = await db
-    .from("candidate_identity")
-    .select("email")
-    .eq("candidate_id", draft.candidate_id)
-    .single();
   try {
-    if (identityError || !identity?.email)
-      throw new AppError(
-        "EMAIL_RECIPIENT_MISSING",
-        "The candidate email address is unavailable.",
-      );
-    if (/@(?:example\.(?:com|org|net)|.+\.invalid)$/i.test(identity.email))
-      throw new AppError(
-        "EMAIL_RECIPIENT_INVALID",
-        "Synthetic demo addresses cannot receive real email. Use an authorized test candidate in the live workspace.",
-      );
     const resendId = await deliverEmail({
       id,
-      to: identity.email,
+      to: recipient,
       subject: draft.subject,
       body: draft.body,
     });
@@ -106,11 +94,16 @@ export async function sendEmail(
       );
     return { status: "SENT", resend_id: resendId };
   } catch (error) {
-    // Keep SENDING even after network errors: provider acceptance may be ambiguous.
     const code = error instanceof AppError ? error.code : "RESEND_FAILED";
+    // A definite rejection sent nothing, so the draft goes back to review.
+    // Anything else stays SENDING: the provider may have accepted it.
     await db
       .from("email_drafts")
-      .update({ error: code, updated_at: new Date().toISOString() })
+      .update({
+        ...(code === "RESEND_REJECTED" ? { status: "PENDING_REVIEW" } : {}),
+        error: code,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id)
       .eq("status", "SENDING");
     throw error instanceof AppError
@@ -121,4 +114,30 @@ export async function sendEmail(
           503,
         );
   }
+}
+async function recipientFor(draftId: string) {
+  const db = getSupabaseAdmin();
+  const { data: draft } = await db
+    .from("email_drafts")
+    .select("candidate_id")
+    .eq("id", draftId)
+    .single();
+  const { data: identity } = draft
+    ? await db
+        .from("candidate_identity")
+        .select("email")
+        .eq("candidate_id", draft.candidate_id)
+        .single()
+    : { data: null };
+  if (!identity?.email)
+    throw new AppError(
+      "EMAIL_RECIPIENT_MISSING",
+      "This candidate has no email address, so the draft can’t be sent.",
+    );
+  if (isSyntheticAddress(identity.email))
+    throw new AppError(
+      "EMAIL_RECIPIENT_INVALID",
+      "This is a sample candidate with an example.com address, which can’t receive email. Nothing was sent.",
+    );
+  return identity.email as string;
 }

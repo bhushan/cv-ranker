@@ -1,6 +1,7 @@
 import { getWorkspace } from "@/lib/workspace";
 import { Outbox } from "@/components/outbox";
 import { scoreFor } from "@/lib/view";
+export const metadata = { title: "Outbox" };
 export default async function OutboxPage({
   searchParams,
 }: {

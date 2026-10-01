@@ -1,5 +1,6 @@
 import { getWorkspace } from "@/lib/workspace";
 import { ROLE_NAME } from "@/lib/view";
+export const metadata = { title: "Rubrics" };
 export default async function RubricsPage() {
   const { rubrics } = await getWorkspace();
   return (

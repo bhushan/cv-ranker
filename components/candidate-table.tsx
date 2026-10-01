@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import type { Candidate, Role } from "@/lib/domain";
 import {
+  candidateStage,
   emailStatusLabel,
   emailTone,
   formatScore,
@@ -17,7 +18,7 @@ const FILTERS = [
   ["all", "All"],
   ["shortlisted", "Shortlisted"],
   ["review", "Email to review"],
-  ["processing", "Processing"],
+  ["processing", "Processing or stopped"],
 ] as const;
 type Filter = (typeof FILTERS)[number][0];
 type Sort = "recent" | Role;
@@ -146,13 +147,7 @@ export function CandidateTable({
                   );
                 })}
                 <td>
-                  {c.status !== "COMPLETE" ? (
-                    <Badge tone="info">Processing</Badge>
-                  ) : short.has(c.id) ? (
-                    <Badge tone="signal">Shortlisted</Badge>
-                  ) : (
-                    <Badge>Not shortlisted</Badge>
-                  )}
+                  <StageBadge candidate={c} shortlisted={short.has(c.id)} />
                 </td>
                 <td>
                   <Badge tone={emailTone(c.email?.status)}>
@@ -183,4 +178,14 @@ export function CandidateTable({
       </div>
     </section>
   );
+}
+function StageBadge({
+  candidate,
+  shortlisted,
+}: {
+  candidate: Candidate;
+  shortlisted: boolean;
+}) {
+  const { label, tone } = candidateStage(candidate, shortlisted);
+  return <Badge tone={tone}>{label}</Badge>;
 }

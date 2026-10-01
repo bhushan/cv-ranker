@@ -1,6 +1,13 @@
 import { expect, it } from "vitest";
 import { getDemoData } from "../lib/demo";
-import { nextPendingDraft, rankIn, rankedFor, shortlistIds } from "../lib/view";
+import {
+  candidateStage,
+  isSyntheticAddress,
+  nextPendingDraft,
+  rankIn,
+  rankedFor,
+  shortlistIds,
+} from "../lib/view";
 const { candidates } = getDemoData();
 it("ranks completed candidates per role with stable ties", () => {
   const pm = rankedFor(candidates, "PM");
@@ -32,4 +39,29 @@ it("moves to the next pending draft after the current one, wrapping around", () 
     i === 0 ? c : { ...c, email: c.email && { ...c.email, status: "SENT" } },
   );
   expect(nextPendingDraft(one, one[0].email!.id)).toBeNull();
+});
+it("recognises sample addresses that can never receive email", () => {
+  expect(isSyntheticAddress("candidate1@example.com")).toBe(true);
+  expect(isSyntheticAddress("a@test.invalid")).toBe(true);
+  expect(isSyntheticAddress("ana@example.company.com")).toBe(false);
+  expect(isSyntheticAddress("ana@kargo.dev")).toBe(false);
+});
+it("labels a candidate whose processing stopped differently from one still running", () => {
+  const c = candidates[0];
+  expect(candidateStage({ ...c, status: "FAILED" }, true)).toEqual({
+    label: "Stopped",
+    tone: "hold",
+  });
+  expect(candidateStage({ ...c, status: "PROCESSING" }, false)).toEqual({
+    label: "Processing",
+    tone: "info",
+  });
+  expect(candidateStage(c, true)).toEqual({
+    label: "Shortlisted",
+    tone: "signal",
+  });
+  expect(candidateStage(c, false)).toEqual({
+    label: "Not shortlisted",
+    tone: "neutral",
+  });
 });

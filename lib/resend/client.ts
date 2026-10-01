@@ -30,12 +30,27 @@ export async function deliverEmail(input: {
     signal: AbortSignal.timeout(15000),
   });
   const result = await response.json().catch(() => null);
+  if (response.status === 429)
+    throw new AppError(
+      "RESEND_QUOTA_EXCEEDED",
+      "The email allowance is exhausted. Try again later.",
+      503,
+    );
+  // A 4xx answer means Resend refused the email, so nothing was sent.
+  if (response.status >= 400 && response.status < 500)
+    throw new AppError(
+      "RESEND_REJECTED",
+      `Resend rejected this email, so nothing was sent${
+        typeof result?.message === "string"
+          ? `: ${result.message.slice(0, 300)}`
+          : "."
+      }`,
+      502,
+    );
   if (!response.ok)
     throw new AppError(
-      response.status === 429 ? "RESEND_QUOTA_EXCEEDED" : "RESEND_FAILED",
-      response.status === 429
-        ? "The free email allowance is exhausted. Please try again later."
-        : "Email delivery failed. The send is locked for manual reconciliation.",
+      "RESEND_FAILED",
+      "Email delivery could not be confirmed. This send is locked; check Resend before taking further action.",
       503,
     );
   if (!result?.id || typeof result.id !== "string")

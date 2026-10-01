@@ -31,7 +31,7 @@ it("matches quotes that differ only in typography", () => {
   ])
     expect(evidenceFound(quote, cv), quote).toBe(true);
 });
-it("matches excerpts joined by an ellipsis only when every fragment is present in order", () => {
+it("matches excerpts joined by an ellipsis only when every fragment is present", () => {
   expect(
     evidenceFound(
       "Designed and built full-stack features … serving millions of global merchants",
@@ -43,7 +43,7 @@ it("matches excerpts joined by an ellipsis only when every fragment is present i
       "serving millions of global merchants ... Designed and built full-stack features",
       cv,
     ),
-  ).toBe(false);
+  ).toBe(true);
   expect(
     evidenceFound(
       "Designed and built full-stack features ... led a logistics team",
@@ -107,4 +107,28 @@ it("scores an unverifiable quote zero instead of failing the whole evaluation", 
     score: 0,
     evidence: "Evidence unavailable",
   });
+});
+it("accepts several real CV lines cited together, in any order and with any separator", () => {
+  for (const quote of [
+    "Designed and built full-stack features; Built merchant onboarding workflows serving millions of global merchants",
+    "Built merchant onboarding workflows serving millions of global merchants\nDesigned and built full-stack features",
+    '"Designed and built full-stack features" and "serving millions of global merchants"',
+    "• Designed and built full-stack features • Module Lead → Senior Developer",
+    "“Designed and built full-stack features for a platform processing 1B+ requests/month.”",
+  ])
+    expect(evidenceFound(quote, cv), quote).toBe(true);
+});
+it("rejects a multi-line citation when any line is not in the CV", () => {
+  expect(
+    evidenceFound(
+      "Designed and built full-stack features; Ran customs clearance for freight carriers",
+      cv,
+    ),
+  ).toBe(false);
+  expect(
+    evidenceFound(
+      '"Designed and built full-stack features" and "led 40 ports"',
+      cv,
+    ),
+  ).toBe(false);
 });

@@ -4,6 +4,7 @@ import { getWorkspace } from "@/lib/workspace";
 import { shortlistIds } from "@/lib/view";
 import { CandidateTable } from "@/components/candidate-table";
 import { SeedButton } from "@/components/seed-button";
+export const metadata = { title: "Candidates" };
 export default async function CandidatesPage() {
   const { candidates } = await getWorkspace();
   const shortlisted = shortlistIds(candidates);

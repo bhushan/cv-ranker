@@ -4,6 +4,7 @@ import { getWorkspace } from "@/lib/workspace";
 import type { Role } from "@/lib/domain";
 import { ROLE_NAME, formatScore, rankedFor } from "@/lib/view";
 import { Strip } from "@/components/strip";
+export const metadata = { title: "Rankings" };
 export default async function RankingsPage({
   searchParams,
 }: {
