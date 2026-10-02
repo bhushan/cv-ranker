@@ -1269,9 +1269,6 @@ select:focus {
   min-height: 44px;
   margin-top: 4px;
 }
-.login-card .text-button {
-  justify-content: center;
-}
 .login-mobile-logo {
   display: none;
 }

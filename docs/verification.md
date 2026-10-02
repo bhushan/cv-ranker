@@ -23,7 +23,7 @@ Verified on 1 October 2026.
 - The isolated `kargo` schema (tables, two historical rubrics, a private CV bucket and 12 synthetic candidates) lives in an existing Supabase project without touching its other tables.
 - Supabase, Gemini and Resend variables are configured in Vercel, including `GEMINI_FREE_TIER_CONFIRMED`. Founder login and every signed-in page render on production.
 - A real CV upload reached storage and completed the live PM evaluation; the SPM step failed on strict evidence matching, which led to the typography-tolerant matcher. A full live upload-to-ranking run after that fix is still to be confirmed.
-- Resend currently rejects sends (the sender domain needs verification), so sign-in links and candidate emails do not deliver yet. No real candidate emails have been sent.
+- Resend currently rejects sends (the sender domain needs verification), so candidate emails do not deliver yet. No real candidate emails have been sent.
 - Signed-in pages were checked visually from server-rendered HTML; click-through of signed-in interactions (approve and send, upload, filters, sign out) in a browser is still to be done.
 - Session deck was not supplied; the public applications listing returned 50 files although the problem statement describes 60. The eight required historical hire files were all available and inspected.
 
