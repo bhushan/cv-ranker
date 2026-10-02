@@ -40,7 +40,9 @@ it("shows an actionable message for rejected credentials", async () => {
   });
   const response = await POST(request("founder@example.com"));
   expect(response.status).toBe(401);
-  expect((await response.json()).error.message).toContain("Email or password");
+  const { message } = (await response.json()).error;
+  expect(message).toContain("Email or password");
+  expect(message).not.toContain("sign-in link");
   expect(mocks.signOut).toHaveBeenCalled();
 });
 it("does not allow another authenticated account", async () => {

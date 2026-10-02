@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       await client.auth.signOut();
       throw new AppError(
         "UNAUTHORIZED",
-        "Email or password is incorrect. Use the founder email and temporary password, or request a sign-in link.",
+        "Email or password is incorrect. Use the founder email and password.",
         401,
       );
     }

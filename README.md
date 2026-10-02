@@ -161,4 +161,4 @@ One-minute walkthrough:
 
 See [deployment verification](docs/verification.md) for what was actually checked and remaining setup. A live provider workflow must not be marked complete until Supabase, Gemini and Resend are configured and verified.
 
-Founder sign-in supports a password or a one-time email link. Create the authorized founder in Supabase Auth and configure their UUID as `FOUNDER_USER_ID` in Vercel, then redeploy. Email links are sent only when the matching founder requests one, and share the free email budget with hiring invitations.
+Founder sign-in uses a password. Create the authorized founder in Supabase Auth and configure their UUID as `FOUNDER_USER_ID` in Vercel, then redeploy.

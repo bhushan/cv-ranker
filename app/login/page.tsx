@@ -12,13 +12,8 @@ async function signedIn() {
     return false;
   }
 }
-export default async function Login({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export default async function Login() {
   if (await signedIn()) redirect("/candidates");
-  const { error } = await searchParams;
   return (
     <main className="login">
       <section className="login-intro">
@@ -38,13 +33,7 @@ export default async function Login({
         </ul>
       </section>
       <section className="login-pane">
-        <LoginForm
-          initialError={
-            error === "invalid_link"
-              ? "That sign-in link has expired or was already used. Sign in with your password, or request a new link."
-              : ""
-          }
-        />
+        <LoginForm />
       </section>
     </main>
   );
